@@ -1,0 +1,3 @@
+[submodule "External/spirv-tools"]
+	path = External/spirv-tools
+	url = https://github.com/raygengroup/spirv-tools

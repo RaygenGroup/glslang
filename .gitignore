@@ -9,7 +9,6 @@ bazel-*
 build/
 Test/localResults/
 External/googletest
-External/spirv-tools
 out/
 
 # GN generated files
