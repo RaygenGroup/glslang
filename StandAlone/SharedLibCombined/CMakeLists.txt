@@ -31,21 +31,12 @@
 # ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 
-add_library(glslang-default-resource-limits
-            ${CMAKE_CURRENT_SOURCE_DIR}/ResourceLimits.cpp
-            ${CMAKE_CURRENT_SOURCE_DIR}/resource_limits_c.cpp)
-set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER glslang)
-set_property(TARGET glslang-default-resource-limits PROPERTY POSITION_INDEPENDENT_CODE ON)
+set(SOURCES SharedLibCombined.cpp SharedLibCombined.h)
 
-target_include_directories(glslang-default-resource-limits
-                           PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                           PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>)
-
-set(SOURCES StandAlone.cpp DirStackFileIncluder.h)
-
-add_executable(glslangValidator ${SOURCES})
-set_property(TARGET glslangValidator PROPERTY FOLDER tools)
-glslang_set_link_args(glslangValidator)
+set (CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
+add_library(SPIRV-SharedLib SHARED ${SOURCES})
+set (CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS OFF)
+set_property(TARGET SPIRV-SharedLib PROPERTY FOLDER tools)
 
 set(LIBRARIES
     glslang
@@ -64,46 +55,17 @@ elseif(UNIX)
     endif()
 endif(WIN32)
 
-target_link_libraries(glslangValidator ${LIBRARIES})
-target_include_directories(glslangValidator PUBLIC
+target_link_libraries(SPIRV-SharedLib ${LIBRARIES})
+target_include_directories(SPIRV-SharedLib PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../External>
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}/External>)
 
 if(ENABLE_OPT)
-    target_include_directories(glslangValidator
+    target_include_directories(SPIRV-SharedLib
         PRIVATE ${spirv-tools_SOURCE_DIR}/include
     )
 endif(ENABLE_OPT)
 
-if(ENABLE_SPVREMAPPER)
-    set(REMAPPER_SOURCES spirv-remap.cpp)
-    add_executable(spirv-remap ${REMAPPER_SOURCES})
-    set_property(TARGET spirv-remap PROPERTY FOLDER tools)
-    glslang_set_link_args(spirv-remap)
-    target_link_libraries(spirv-remap ${LIBRARIES})
-endif()
-
 if(WIN32)
     source_group("Source" FILES ${SOURCES})
 endif(WIN32)
-
-if(ENABLE_GLSLANG_INSTALL)
-    install(TARGETS glslangValidator EXPORT glslangValidatorTargets
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-    install(EXPORT glslangValidatorTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
-
-    if(ENABLE_SPVREMAPPER)
-        install(TARGETS spirv-remap EXPORT spirv-remapTargets
-            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-        install(EXPORT spirv-remapTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
-    endif()
-
-    if(BUILD_SHARED_LIBS)
-        install(TARGETS glslang-default-resource-limits EXPORT glslang-default-resource-limitsTargets
-                LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
-        install(EXPORT glslang-default-resource-limitsTargets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake)
-    endif()
-endif(ENABLE_GLSLANG_INSTALL)
-
-# Add last to to use glslang-default-resource-limits
-add_subdirectory(SharedLibCombined)
